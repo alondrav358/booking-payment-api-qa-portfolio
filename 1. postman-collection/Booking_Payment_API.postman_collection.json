@@ -1,0 +1,121 @@
+{
+  "info": {
+    "name": "Booking & Payment REST API QA Suite",
+    "description": "Automated API test collection validating authentication, CRUD operations, HTTP status codes, response times, and financial payload integrity.",
+    "schema": "https://getpostman.com"
+  },
+  "item": [
+    {
+      "name": "1. Auth - Generate Token",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response contains valid auth token', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.token).to.be.a('string').and.not.be.empty;",
+              "    pm.collectionVariables.set('auth_token', jsonData.token);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"admin\",\n    \"password\": \"password123\"\n}"
+        },
+        "url": {
+          "raw": "https://herokuapp.com",
+          "protocol": "https",
+          "host": ["restful-booker", "herokuapp", "com"],
+          "path": ["auth"]
+        }
+      }
+    },
+    {
+      "name": "2. Booking - Create Transaction Record",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status code is 200 OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "pm.test('Response time is under 1000ms', function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(1000);",
+              "});",
+              "pm.test('Validate booking ID and financial fields integrity', function () {",
+              "    var jsonData = pm.response.json();",
+              "    pm.expect(jsonData.bookingid).to.be.a('number');",
+              "    pm.expect(jsonData.booking.totalprice).to.eql(250);",
+              "    pm.expect(jsonData.booking.depositpaid).to.eql(true);",
+              "    pm.collectionVariables.set('booking_id', jsonData.bookingid);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "Accept", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"firstname\": \"Alondra\",\n    \"lastname\": \"Valdez\",\n    \"totalprice\": 250,\n    \"depositpaid\": true,\n    \"bookingdates\": {\n        \"checkin\": \"2026-12-01\",\n        \"checkout\": \"2026-12-05\"\n    },\n    \"additionalneeds\": \"Breakfast\"\n}"
+        },
+        "url": {
+          "raw": "https://herokuapp.com",
+          "protocol": "https",
+          "host": ["restful-booker", "herokuapp", "com"],
+          "path": ["booking"]
+        }
+      }
+    },
+    {
+      "name": "3. Booking - Unauthorized Update Check (Security)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Unauthorized price update returns 403 Forbidden', function () {",
+              "    pm.response.to.have.status(403);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"firstname\": \"Alondra\",\n    \"lastname\": \"Valdez\",\n    \"totalprice\": 1,\n    \"depositpaid\": true,\n    \"bookingdates\": {\n        \"checkin\": \"2026-12-01\",\n        \"checkout\": \"2026-12-05\"\n    }\n}"
+        },
+        "url": {
+          "raw": "https://herokuapp.com/{{booking_id}}",
+          "protocol": "https",
+          "host": ["restful-booker", "herokuapp", "com"],
+          "path": ["booking", "{{booking_id}}"]
+        }
+      }
+    }
+  ]
+}
